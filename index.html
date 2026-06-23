@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ローカル音声抽出ツール - youyouboy_dragon_ Official</title>
+    <style>
+        /* 全体のベース設定：ダークテーマ化 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* 洗練されたヘッダー */
+        header {
+            background-color: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-title {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: linear-gradient(to right, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header-sub {
+            font-size: 13px;
+            color: #94a3b8;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 60px 20px;
+        }
+
+        /* ツールパネルのデザイン向上 */
+        .container {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 50px 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 550px;
+            width: 100%;
+            margin-bottom: 50px;
+            transition: transform 0.3s ease;
+        }
+        .container:hover {
+            transform: translateY(-5px);
+        }
+        .container h1 {
+            font-size: 28px;
+            margin-bottom: 15px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 1px;
+        }
+        .container p {
+            font-size: 14px;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+
+        /* 入力欄・ボタンの共通スタイル化とリッチ化 */
+        input[type="file"] {
+            display: none;
+        }
+        
+        /* グラデーションボタン */
+        .file-label, button, #downloadLink {
+            font-family: inherit;
+            display: inline-block;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            border: none;
+            letter-spacing: 1px;
+        }
+
+        /* ファイル選択ボタン */
+        .file-label {
+            background: linear-gradient(135deg, #475569 0%, #334155 100%);
+            color: #f1f5f9;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .file-label:hover {
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            transform: translateY(-2px);
+        }
+
+        #fileName {
+            margin-bottom: 25px;
+            font-weight: 500;
+            color: #cbd5e1;
+            word-break: break-all;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        /* ファイル名入力欄のダーク化 */
+        .text-input {
+            width: 90%;
+            padding: 14px 20px;
+            margin-bottom: 30px;
+            background-color: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            color: #f8fafc;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            display: none;
+            transition: border-color 0.3s ease;
+        }
+        .text-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        .text-input::placeholder {
+            color: #64748b;
+        }
+
+        /* 抽出ボタン */
+        button#extractBtn {
+            background: linear-gradient(135deg, #5b21b6 0%, #4c1d95 100%);
+            color: #f1f5f9;
+            width: 90%;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        button#extractBtn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background: #334155;
+            color: #94a3b8;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #status {
+            margin-top: 25px;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        /* ダウンロードボタン */
+        #downloadLink {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            margin-top: 25px;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            width: 90%;
+            box-sizing: border-box;
+            display: none; /* 初期状態は非表示 */
+        }
+        #downloadLink:hover {
+            background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* 利用規約エリアのダーク化 */
+        .terms-section {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(15px);
+            padding: 40px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 650px;
+            width: 100%;
+        }
+        .terms-section h2 {
+            font-size: 20px;
+            color: #ffffff;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            margin-top: 0;
+            letter-spacing: 1px;
+        }
+        .terms-box {
+            height: 180px;
+            overflow-y: auto;
+            background-color: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 20px;
+            font-size: 13px;
+            color: #94a3b8;
+            line-height: 1.8;
+        }
+        /* スクロールバーのカスタマイズ */
+        .terms-box::-webkit-scrollbar {
+            width: 8px;
+        }
+        .terms-box::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 4px;
+        }
+        .terms-box::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        .terms-box::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* フッター */
+        footer {
+            background-color: #0f172a;
+            color: #64748b;
+            text-align: center;
+            padding: 25px;
+            font-size: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-title">Audio Extractor</div>
+    <div class="header-sub">by youyouboy_dragon_ Official</div>
+</header>
+
+<main>
+    <div class="container">
+        <h1>ローカル音声抽出ツール</h1>
+        <p>動画ファイルから音声（WAV形式）を安全に抽出します。<br>※処理はすべて端末内で完結し、外部通信は行いません。</p>
+
+        <label class="file-label">
+            動画ファイルを選択
+            <input type="file" id="videoInput" accept="video/*">
+        </label>
+        
+        <div id="fileName">ファイルが選択されていません</div>
+
+        <input type="text" id="outputFileName" class="text-input" placeholder="保存するファイル名を入力">
+
+        <button id="extractBtn" disabled>音声を抽出する</button>
+
+        <div id="status"></div>
+
+        <a id="downloadLink">音声をダウンロード</a>
+    </div>
+
+    <div class="terms-section">
+        <h2>利用規約</h2>
+        <div class="terms-box">
+            <p><strong>第1条（目的）</strong><br>
+            本利用規約は、youyouboy_dragon_ Official（以下「当方」）が提供する「ローカル音声抽出ツール」（以下「本ツール」）の利用条件を定めるものです。</p>
+
+            <p><strong>第2条（安全性とプライバシー）</strong><br>
+            本ツールは、ユーザーのブラウザ上でローカルに動作します。選択した動画ファイルや抽出された音声データが外部のサーバーへ送信されたり、保存されたりすることは一切ありません。</p>
+
+            <p><strong>第3条（著作権と適正利用）</strong><br>
+            1. ユーザーは、著作権法で認められた「私的使用のための複製」の範囲内でのみ本ツールを利用するものとします。<br>
+            2. 著作権者の許可なく、他人の著作物から音声を抽出し、インターネット上に公開、配布、販売する等の著作権侵害行為を固く禁じます。</p>
+
+            <p><strong>第4条（免責事項）</strong><br>
+            1. 本ツールの利用により生じた端末の不具合、データの破損、その他いかなる損害・トラブルに対しても、当方は一切の責任を負いません。<br>
+            2. 端末のスペックや動画ファイルの形式により、音声の抽出に失敗する場合があります。すべての動画での完全な動作を保証するものではありません。</p>
+
+            <p><strong>第5条（規約の変更）</strong><br>
+            当方は、事前の通知なく本規約を変更できるものとします。</p>
+        </div>
+    </div>
+</main>
+
+<footer>
+    &copy; 2026 youyouboy_dragon_ Official. All rights reserved.
+</footer>
+
+<!-- プログラム部分は一切変更していません -->
+<script>
+    const videoInput = document.getElementById('videoInput');
+    const extractBtn = document.getElementById('extractBtn');
+    const fileNameDisplay = document.getElementById('fileName');
+    const statusDisplay = document.getElementById('status');
+    const downloadLink = document.getElementById('downloadLink');
+    const outputFileNameInput = document.getElementById('outputFileName');
+
+    let selectedFile = null;
+
+    videoInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            selectedFile = file;
+            fileNameDisplay.textContent = `選択中: ${file.name}`;
+            
+            outputFileNameInput.value = file.name.replace(/\.[^/.]+$/, "");
+            outputFileNameInput.style.display = 'inline-block';
+
+            extractBtn.disabled = false;
+            downloadLink.style.display = 'none';
+            statusDisplay.textContent = '';
+        }
+    });
+
+    extractBtn.addEventListener('click', async () => {
+        if (!selectedFile) return;
+
+        extractBtn.disabled = true;
+        outputFileNameInput.disabled = true;
+        statusDisplay.textContent = '処理中... しばらくお待ちください。';
+        statusDisplay.style.color = '#fbbf24'; // ダークテーマ用に黄色を少し明るく調整
+
+        try {
+            const arrayBuffer = await selectedFile.arrayBuffer();
+            
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+            const wavBlob = audioBufferToWav(audioBuffer);
+            const url = URL.createObjectURL(wavBlob);
+
+            statusDisplay.textContent = '抽出完了！下のボタンからダウンロードしてください。';
+            statusDisplay.style.color = '#34d399'; // ダークテーマ用に緑を少し明るく調整
+
+            let customFileName = outputFileNameInput.value.trim() || 'audio_extracted';
+
+            downloadLink.href = url;
+            downloadLink.download = customFileName + '.wav';
+            downloadLink.style.display = 'inline-block';
+
+        } catch (error) {
+            console.error(error);
+            statusDisplay.textContent = 'エラーが発生しました。対応していない動画形式の可能性があります。';
+            statusDisplay.style.color = '#f87171'; // ダークテーマ用に赤を少し明るく調整
+        } finally {
+            extractBtn.disabled = false;
+            outputFileNameInput.disabled = false;
+        }
+    });
+
+    function audioBufferToWav(buffer) {
+        const numOfChan = buffer.numberOfChannels;
+        const length = buffer.length * numOfChan * 2 + 44;
+        const bufferArray = new ArrayBuffer(length);
+        const view = new DataView(bufferArray);
+        const channels = [];
+        let i, sample;
+        let offset = 0;
+        let pos = 0;
+
+        function setUint16(data) {
+            view.setUint16(pos, data, true);
+            pos += 2;
+        }
+
+        function setUint32(data) {
+            view.setUint32(pos, data, true);
+            pos += 4;
+        }
+
+        setUint32(0x46464952); // "RIFF"
+        setUint32(length - 8);  // file length - 8
+        setUint32(0x45564157); // "WAVE"
+
+        setUint32(0x20746d66); // "fmt " chunk
+        setUint32(16);         // length = 16
+        setUint16(1);          // PCM (uncompressed)
+        setUint16(numOfChan);
+        setUint32(buffer.sampleRate);
+        setUint32(buffer.sampleRate * 2 * numOfChan); // avg. bytes/sec
+        setUint16(numOfChan * 2); // block-align
+        setUint16(16);         // 16-bit
+
+        setUint32(0x61746164); // "data" - chunk
+        setUint32(length - pos - 4); // chunk length
+
+        for (i = 0; i < buffer.numberOfChannels; i++) {
+            channels.push(buffer.getChannelData(i));
+        }
+
+        while (pos < length) {
+            for (i = 0; i < numOfChan; i++) {
+                sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
+                view.setInt16(pos, sample, true);
+                pos += 2;
+            }
+            offset++;
+        }
+
+        return new Blob([bufferArray], { type: 'audio/wav' });
+    }
+</script>
+
+</body>
+</html>
